@@ -1,44 +1,76 @@
--- simple ESP module used by Main.lua
--- returns a table with :Toggle(bool) and :SetText(string)
-
-local ESP = {}
-
--- create a small label in the centre of the screen
+local ESPModule = {}
 local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local gui = Instance.new("ScreenGui")
-gui.Name = "CDoorsSimpleESP"
-gui.ResetOnSpawn = false
+local RunService = game:GetService("RunService")
+local enabled = false
+local showBoxes = true
+local showNames = true
+local color = Color3.fromRGB(255,255,255)
+local highlights = {}
 
-local label = Instance.new("TextLabel")
-label.Size = UDim2.new(0, 300, 0, 50)
-label.Position = UDim2.new(0.5, 0, 0.5, 0)
-label.AnchorPoint = Vector2.new(0.5, 0.5)
-label.BackgroundTransparency = 0.5
-label.BackgroundColor3 = Color3.new(0, 0, 0)
-label.TextColor3 = Color3.new(1, 1, 1)
-label.TextScaled = true
-label.Text = ""
-label.Visible = false
-label.Parent = gui
+local function createESP(player)
+    if not player.Character then return end
+    if highlights[player] then return end
 
--- parent gui to playergui when it exists
-if player and player:FindFirstChild("PlayerGui") then
-    gui.Parent = player.PlayerGui
-else
-    Players.PlayerAdded:Connect(function(plr)
-        if plr == player then
-            gui.Parent = plr:WaitForChild("PlayerGui")
+    local highlight = Instance.new("Highlight")
+    highlight.FillColor = color
+    highlight.OutlineColor = color
+    highlight.FillTransparency = showBoxes and 0.5 or 1
+    highlight.OutlineTransparency = 0
+    highlight.Adornee = player.Character
+    highlight.Parent = player.Character
+
+    highlights[player] = highlight
+end
+
+local function removeESP(player)
+    if highlights[player] then
+        highlights[player]:Destroy()
+        highlights[player] = nil
+    end
+end
+
+local function updateAll()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if enabled then
+            createESP(player)
+        else
+            removeESP(player)
+        end
+    end
+end
+
+function ESPModule:SetEnabled(Value)
+    enabled = Value
+    updateAll()
+end
+
+function ESPModule:SetBoxes(Value)
+    showBoxes = Value
+    updateAll()
+end
+
+function ESPModule:SetNames(Value)
+    showNames = Value
+end
+
+function ESPModule:SetColor(Value)
+    color = Value
+    for _, highlight in pairs(highlights) do
+        highlight.FillColor = color
+        highlight.OutlineColor = color
+    end
+end
+
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        if enabled then
+            createESP(player)
         end
     end)
-end
+end)
 
-function ESP:Toggle(state)
-    label.Visible = state
-end
+Players.PlayerRemoving:Connect(function(player)
+    removeESP(player)
+end)
 
-function ESP:SetText(str)
-    label.Text = str or ""
-end
-
-return ESP
+return ESPModule

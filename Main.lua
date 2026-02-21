@@ -2,69 +2,22 @@ local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
 local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
+local ESPModule = loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/MnaX-make/CDoors-V2/main/Code/ESP.lua"
+))()
+
+if not ESPModule then
+    warn("ESP failed to load")
+end
+
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local userId = player.UserId
 local thumbType = Enum.ThumbnailType.HeadShot
 local thumbSize = Enum.ThumbnailSize.Size420x420
-local content, isReady = Players:GetUserThumbnailAsync(userId, thumbType, thumbSize)
-
+local content = Players:GetUserThumbnailAsync(userId, thumbType, thumbSize)
 local Options = Library.Options
 local Toggles = Library.Toggles
-
-Library.ForceCheckbox = false
-Library.ShowToggleFrameInKeybinds = true
-
--- simple ESP module loading: the code lives in Code/ESP.lua and returns a table
--- with :Toggle(state) and :SetText(text).  if the local file cannot be read we
--- fall back to a minimal no-op implementation so the rest of the script still runs.
-local ESP = nil
-if isfile and readfile then
-    local ok,src = pcall(readfile, "Code/ESP.lua")
-    if ok and src then
-        local f = loadstring(src)
-        if f then
-            ESP = f()
-        end
-    end
-end
-ESP = ESP or {}
-ESP.Toggle = ESP.Toggle or function() end
-ESP.SetText = ESP.SetText or function() end
-
--- configuration table in the main script maps a friendly "code" to the numeric id that
--- will be looked up in the names file.  edit the value on the right to whatever
--- asset/part id you want to track.
-local ItemCodes = {
-    Key = 123456789,            -- example entry, change this to the code you need
-}
-
--- names file is read at startup and parsed into a simple id->name table.  the
--- file lives at Code/ESPName/Names.txt and should contain lines of the form
--- 123456789 = Kay
--- this lets you keep the human readable names separate from the script.
-local ItemNames = {}
-if isfile and readfile then
-    local path = "Code/ESPName/Names.txt"
-    if isfile(path) then
-        for _, line in ipairs(string.split(readfile(path), "\n")) do
-            local id, name = line:match("^(%d+)%s*=%s*(.+)$")
-            if id and name then
-                ItemNames[id] = name
-            end
-        end
-    end
-end
-
--- helper that builds the string shown by the ESP label when the toggle is on.
-local function getDisplayText(key)
-    local id = ItemCodes[key]
-    if not id then
-        return "(no code set)"
-    end
-    local name = ItemNames[tostring(id)] or "Unknown"
-    return tostring(id) .. " = " .. name
-end
 
 local Window = Library:CreateWindow({
     Title = "CDoors",
@@ -81,67 +34,20 @@ local Tabs = {
     ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
 }
 
--- Main Tab ----------
-local MainB = Tabs.Main:AddLeftGroupbox("Main", "house")
-local Profile = Tabs.Main:AddRightGroupbox("Profile", "user")
 
+-- MAIN TAB ----------
+
+
+local MainB = Tabs.Main:AddLeftGroupbox("Main")
+local Profile = Tabs.Main:AddRightGroupbox("Profile")
 
 MainB:AddLabel({
-    Text = '<font color="rgb(228, 255, 0)">CDoors</font> Is open Source script By MnaX supports Lots of Executors (<font color="rgb(0, 191, 255)">https://rscripts.net/script/cdoors-V2-open-source-NkT4</font>)',
+    Text = '<font color="rgb(228, 255, 0)">CDoors</font> Open Source Script',
     DoesWrap = true
 })
 
-MainB:AddLabel("LOOK AT THIS DOG")
-
-MainB:AddImage("DOG", {
-    Image = "rbxassetid://12541893596",
-    Callback = function(image)
-        print("Image changed!", image)
-    end,
-})
-
-MainB:AddDivider()
-MainB:AddLabel("ESP configuration")
-MainB:AddTextbox("CodeBox", {
-    Text = tostring(ItemCodes.Key),
-    Placeholder = "numeric id",
-    FocusLost = function(value)
-        local n = tonumber(value)
-        if n then
-            ItemCodes.Key = n
-            if Toggles.PlayerEsp then
-                ESP:SetText(getDisplayText("Key"))
-            end
-        end
-    end,
-})
-MainB:AddButton("ReloadNames", function()
-    -- re-read the names file and update the table
-    ItemNames = {}
-    if isfile and readfile then
-        local path = "Code/ESPName/Names.txt"
-        if isfile(path) then
-            for _, line in ipairs(string.split(readfile(path), "\n")) do
-                local id, name = line:match("^(%d+)%s*=%s*(.+)$")
-                if id and name then
-                    ItemNames[id] = name
-                end
-            end
-        end
-    end
-    -- if ESP is visible update the text immediately
-    if Toggles.PlayerEsp then
-        ESP:SetText(getDisplayText("Key"))
-    end
-end)
-
--- User Profile
-
 Profile:AddImage("UserIcon", {
     Image = content,
-    Callback = function(image)
-        print("Image changed!", image)
-    end,
 })
 
 Profile:AddLabel({
@@ -149,29 +55,41 @@ Profile:AddLabel({
     DoesWrap = true
 })
 
--- Visual Tab ----------
-local VisualTabbox = Tabs.Visual:AddLeftTabbox()
 
-local Main = VisualTabbox:AddTab("ESP")
-Main:AddToggle("PlayerEsp", {
-    Text = "Player Esp",
+-- VISUAL TAB ----------
+
+
+local VisualTab = Tabs.Visual:AddLeftGroupbox("ESP Settings")
+
+VisualTab:AddToggle("MasterESP", {
+    Text = "Enable ESP",
     Default = false,
     Callback = function(Value)
-        -- when the toggle is flipped we visibility of the ESP label and update
-        -- its text to reflect the currently selected code/name pair
-        ESP:Toggle(Value)
-        if Value then
-            ESP:SetText(getDisplayText("Key"))
-        end
+        ESPModule:SetEnabled(Value)
     end
 })
 
-local Settings = VisualTabbox:AddTab("Settings")
-Settings:AddToggle("Cool", {
-    Text = "Tab",
-    Default = false,
+VisualTab:AddToggle("ShowBoxes", {
+    Text = "Show Boxes",
+    Default = true,
     Callback = function(Value)
-        print("Cool toggle:", Value)
+        ESPModule:SetBoxes(Value)
+    end
+})
+
+VisualTab:AddToggle("ShowNames", {
+    Text = "Show Names",
+    Default = true,
+    Callback = function(Value)
+        ESPModule:SetNames(Value)
+    end
+})
+
+VisualTab:AddLabel("ESP Color")
+VisualTab:AddColorPicker("ESPColor", {
+    Default = Color3.fromRGB(255,255,255),
+    Callback = function(Value)
+        ESPModule:SetColor(Value)
     end
 })
 -- Cheat Tab ----------

@@ -1,4 +1,0 @@
--- id to human readable name mappings
--- format: <numeric id> = <name>
-
-123456789 = Kay
