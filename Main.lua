@@ -64,7 +64,7 @@ Profile:AddLabel({
 })
 
 -- Visual Tab ----------
-local ESP = Tabs.Visual:AddRightTabbox()
+local ESP = Tabs.Visual:AddLeftTabbox()
 
 local Main = ESP:AddTab("ESP")
 Main:AddToggle("PlayerEsp", {
