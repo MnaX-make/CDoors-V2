@@ -3,13 +3,21 @@ local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
 local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local Options = Library.Options
+local player = Players.LocalPlayer
+local userId = player.UserId
+local thumbType = Enum.ThumbnailType.HeadShot
+local thumbSize = Enum.ThumbnailSize.Size420x420
+local content, isReady = Players:GetUserThumbnailAsync(userId, thumbType, thumbSize)
 
+local Options = Library.Options
+local Toggles = Library.Toggles
+
+Library.ForceCheckbox = false
+Library.ShowToggleFrameInKeybinds = true
 
 local Window = Library:CreateWindow({
     Title = "CDoors",
-    Footer = "Fully Open Source",
+    Footer = "Fully open Source code",
     Icon = 12497860513,
     NotifySide = "Right",
     ShowCustomCursor = true,
@@ -18,75 +26,89 @@ local Window = Library:CreateWindow({
 local Tabs = {
     Main = Window:AddTab("Main", "house"),
     Visual = Window:AddTab("Visual", "eye"),
+    Cheats = Window:AddTab("Cheats", "shield-alert"),
     ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
 }
 
-local TabBox = Tabs.Visual:AddRightTabbox()
-local PlayersTab = TabBox:AddTab("Players")
-local PlayerUI = {}
-
-local function AddPlayerUI(player)
-
-    if PlayerUI[player] then return end
-
-    local toggleId = "ESP_" .. player.UserId
-    local colorId = "ESP_Color_" .. player.UserId
-    local Toggle = PlayersTab:AddToggle(toggleId, {
-        Text = player.Name,
-        Default = false,
-    })
-
-    Toggle:AddColorPicker(colorId, {
-        Default = Color3.new(1, 1, 0),
-        Title = "ESP Color",
-        Transparency = 0,
-    })
-
-    Toggle:OnChanged(function(Value)
-        print("ESP for", player.Name, "=", Value)
-    end)
-
-    Options[colorId]:OnChanged(function()
-        local Color = Options[colorId].Value
-        print("Color for", player.Name, "=", Color)
-    end)
-
-    PlayerUI[player] = true
-end
-
-for _, player in ipairs(Players:GetPlayers()) do
-    if player ~= LocalPlayer then
-        AddPlayerUI(player)
-    end
-end
-
-Players.PlayerAdded:Connect(function(player)
-    if player ~= LocalPlayer then
-        AddPlayerUI(player)
-    end
-end)
-
--- UI Settings
-
-local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu", "wrench")
+-- Main Tab ----------
+local MainB = Tabs.Main:AddLeftGroupbox("Main", "house")
+local Profile = Tabs.Main:AddRightGroupbox("Profile", "user")
 
 
-
-MenuGroup:AddToggle("KeybindMenuOpen", {
-
-    Default = Library.KeybindFrame.Visible,
-
-    Text = "Open Keybind Menu",
-
-    Callback = function(value)
-
-        Library.KeybindFrame.Visible = value
-
-    end,
-
+MainB:AddLabel({
+    Text = '<font color="rgb(228, 255, 0)">CDoors</font> Is open Source script By MnaX supports Lots of Executors (<font color="rgb(0, 191, 255)">https://rscripts.net/script/cdoors-V2-open-source-NkT4</font>)',
+    DoesWrap = true
 })
 
+MainB:AddLabel("LOOK AT THIS DOG")
 
+MainB:AddImage("DOG", {
+    Image = "rbxassetid://12541893596",
+    Callback = function(image)
+        print("Image changed!", image)
+    end,
+})
+
+-- User Profile
+
+Profile:AddImage("UserIcon", {
+    Image = content,
+    Callback = function(image)
+        print("Image changed!", image)
+    end,
+})
+
+Profile:AddLabel({
+    Text = '<font color="rgb(0, 191, 255)">' .. player.Name .. '</font>',
+    DoesWrap = true
+})
+
+-- Visual Tab ----------
+local VisualTab = Tabs.Visual:AddLeftGroupbox("ESP Main")
+
+VisualTab:AddToggle("MasterESP", {
+    Text = "Enable ESP",
+    Default = false,
+    Callback = function(Value)
+        ESPModule.Enabled = Value
+    end
+})
+
+VisualTab:AddToggle("ShowBoxes", {
+    Text = "Show Boxes",
+    Default = true,
+    Callback = function(Value)
+        ESPModule.Boxes = Value
+    end
+})
+
+VisualTab:AddToggle("ShowNames", {
+    Text = "Show Names",
+    Default = false,
+    Callback = function(Value)
+        ESPModule.Names = Value
+    end
+})
+
+VisualTab:AddLabel("ESP Color"):AddColorPicker("ESPColor", {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value)
+        ESPModule.Color = Value
+    end
+})
+-- Cheat Tab ----------
+
+
+-- UI Settings
+local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu", "wrench")
+
+MenuGroup:AddToggle("KeybindMenuOpen", {
+    Default = Library.KeybindFrame.Visible,
+    Text = "Open Keybind Menu",
+    Callback = function(value)
+        Library.KeybindFrame.Visible = value
+    end,
+})
 
 MenuGroup:AddToggle("ShowCustomCursor", {
     Text = "Custom Cursor",
@@ -95,8 +117,6 @@ MenuGroup:AddToggle("ShowCustomCursor", {
         Library.ShowCustomCursor = Value
     end,
 })
-
-
 
 MenuGroup:AddDropdown("NotificationSide", {
     Values = { "Left", "Right" },
@@ -122,15 +142,12 @@ MenuGroup:AddDivider()
 
 MenuGroup:AddLabel("Menu bind")
     :AddKeyPicker("MenuKeybind", { Default = "RightShift", NoUI = true, Text = "Menu keybind" })
+
 MenuGroup:AddButton("Unload", function()
     Library:Unload()
 end)
 
-
-
 Library.ToggleKeybind = Options.MenuKeybind
-
-
 
 ThemeManager:SetLibrary(Library)
 SaveManager:SetLibrary(Library)
