@@ -2,26 +2,13 @@ local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
 local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
-local ESPModule = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/MnaX-make/CDoors-V2/main/Code/ESP.lua"
-))()
-
-if not ESPModule then
-    warn("ESP failed to load")
-end
-
 local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local userId = player.UserId
-local thumbType = Enum.ThumbnailType.HeadShot
-local thumbSize = Enum.ThumbnailSize.Size420x420
-local content = Players:GetUserThumbnailAsync(userId, thumbType, thumbSize)
+local LocalPlayer = Players.LocalPlayer
 local Options = Library.Options
-local Toggles = Library.Toggles
 
 local Window = Library:CreateWindow({
     Title = "CDoors",
-    Footer = "Fully open Source code",
+    Footer = "Fully Open Source",
     Icon = 12497860513,
     NotifySide = "Right",
     ShowCustomCursor = true,
@@ -30,68 +17,57 @@ local Window = Library:CreateWindow({
 local Tabs = {
     Main = Window:AddTab("Main", "house"),
     Visual = Window:AddTab("Visual", "eye"),
-    Cheats = Window:AddTab("Cheats", "shield-alert"),
     ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
 }
 
+local TabBox = Tabs.Visual:AddRightTabbox()
+local PlayersTab = TabBox:AddTab("Players")
 
--- MAIN TAB ----------
-
-
-local MainB = Tabs.Main:AddLeftGroupbox("Main")
-local Profile = Tabs.Main:AddRightGroupbox("Profile")
-
-MainB:AddLabel({
-    Text = '<font color="rgb(228, 255, 0)">CDoors</font> Open Source Script',
-    DoesWrap = true
-})
-
-Profile:AddImage("UserIcon", {
-    Image = content,
-})
-
-Profile:AddLabel({
-    Text = '<font color="rgb(0, 191, 255)">' .. player.Name .. '</font>',
-    DoesWrap = true
-})
+local PlayerUI = {}
 
 
--- VISUAL TAB ----------
+local function AddPlayerUI(player)
+
+    if PlayerUI[player] then return end
 
 
-local VisualTab = Tabs.Visual:AddLeftGroupbox("ESP Settings")
+    local toggleId = "ESP_" .. player.UserId
+    local colorId = "ESP_Color_" .. player.UserId
+    local Toggle = PlayersTab:AddToggle(toggleId, {
+        Text = player.Name,
+        Default = false,
+    })
 
-VisualTab:AddToggle("MasterESP", {
-    Text = "Enable ESP",
-    Default = false,
-    Callback = function(Value)
-        ESPModule:SetEnabled(Value)
+    Toggle:AddColorPicker(colorId, {
+        Default = Color3.new(1, 1, 0),
+        Title = "ESP Color",
+        Transparency = 0,
+    })
+
+
+    Toggle:OnChanged(function(Value)
+        print("ESP for", player.Name, "=", Value)
+    end)
+
+    Options[colorId]:OnChanged(function()
+        local Color = Options[colorId].Value
+        print("Color for", player.Name, "=", Color)
+    end)
+
+    PlayerUI[player] = true
+end
+
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        AddPlayerUI(player)
     end
-})
+end
 
-VisualTab:AddToggle("ShowBoxes", {
-    Text = "Show Boxes",
-    Default = true,
-    Callback = function(Value)
-        ESPModule:SetBoxes(Value)
+Players.PlayerAdded:Connect(function(player)
+    if player ~= LocalPlayer then
+        AddPlayerUI(player)
     end
-})
-
-VisualTab:AddToggle("ShowNames", {
-    Text = "Show Names",
-    Default = true,
-    Callback = function(Value)
-        ESPModule:SetNames(Value)
-    end
-})
-
-VisualTab:AddLabel("ESP Color")
-VisualTab:AddColorPicker("ESPColor", {
-    Default = Color3.fromRGB(255,255,255),
-    Callback = function(Value)
-        ESPModule:SetColor(Value)
-    end
-})
+end)
 -- Cheat Tab ----------
 
 
