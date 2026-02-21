@@ -66,11 +66,23 @@ Profile:AddLabel({
 -- Visual Tab ----------
 local ESP = Tabs.Visual:AddRightTabbox()
 
-local Main = ESP:AddTab("")
-Tab1:AddToggle("PlayerEsp", { Text = "Player Esp })
+local Main = ESP:AddTab("ESP")
+Main:AddToggle("PlayerEsp", {
+    Text = "Player Esp",
+    Default = false,
+    Callback = function(Value)
+        print("Player ESP:", Value)
+    end
+})
 
-local Settings = ESP:AddTab("Tab 2")
-Tab2:AddToggle("Cool", { Text = "Tabe" })
+local Settings = ESP:AddTab("Settings")
+Settings:AddToggle("Cool", {
+    Text = "Tab",
+    Default = false,
+    Callback = function(Value)
+        print("Cool toggle:", Value)
+    end
+})
 
 -- Cheat Tab ----------
 
