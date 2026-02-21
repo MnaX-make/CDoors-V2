@@ -25,12 +25,12 @@ local Window = Library:CreateWindow({
 
 local Tabs = {
     Main = Window:AddTab("Main", "house"),
-    Cheats = Window:AddTab("Cheats", "shield-alert"),
     Visual = Window:AddTab("Visual", "eye"),
+    Cheats = Window:AddTab("Cheats", "shield-alert"),
     ["UI Settings"] = Window:AddTab("UI Settings", "settings"),
 }
 
--- Main Tab
+-- Main Tab ----------
 local MainB = Tabs.Main:AddLeftGroupbox("Main", "house")
 local Profile = Tabs.Main:AddRightGroupbox("Profile", "user")
 
@@ -62,6 +62,17 @@ Profile:AddLabel({
     Text = '<font color="rgb(0, 191, 255)">' .. player.Name .. '</font>',
     DoesWrap = true
 })
+
+-- Visual Tab ----------
+local ESP = Tabs.Visual:AddRightTabbox()
+
+local Main = ESP:AddTab("")
+Tab1:AddToggle("PlayerEsp", { Text = "Player Esp })
+
+local Settings = ESP:AddTab("Tab 2")
+Tab2:AddToggle("Cool", { Text = "Tabe" })
+
+-- Cheat Tab ----------
 
 
 -- UI Settings
@@ -124,3 +135,11 @@ SaveManager:SetSubFolder("CDoorsV2")
 SaveManager:BuildConfigSection(Tabs["UI Settings"])
 ThemeManager:ApplyToTab(Tabs["UI Settings"])
 SaveManager:LoadAutoloadConfig()
+
+Library:Notify({
+    Title = "CDoors Loaded",
+    Description = "CDoors is Fully Loaded!!!",
+    BigIcon = "rbxassetid://12497860513",
+    IconColor = Color3.new(0, 1, 0), -- Green
+    Time = 4,
+})
