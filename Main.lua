@@ -5,7 +5,6 @@ local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Options = Library.Options
-
 local Window = Library:CreateWindow({
     Title = "CDoors",
     Footer = "Fully Open Source",
@@ -22,14 +21,10 @@ local Tabs = {
 
 local TabBox = Tabs.Visual:AddRightTabbox()
 local PlayersTab = TabBox:AddTab("Players")
-
 local PlayerUI = {}
 
-
 local function AddPlayerUI(player)
-
     if PlayerUI[player] then return end
-
 
     local toggleId = "ESP_" .. player.UserId
     local colorId = "ESP_Color_" .. player.UserId
@@ -38,12 +33,11 @@ local function AddPlayerUI(player)
         Default = false,
     })
 
-    Toggle:AddColorPicker(colorId, {
+    PlayersTab:AddColorPicker(colorId, {
         Default = Color3.new(1, 1, 0),
         Title = "ESP Color",
         Transparency = 0,
     })
-
 
     Toggle:OnChanged(function(Value)
         print("ESP for", player.Name, "=", Value)
@@ -68,8 +62,12 @@ Players.PlayerAdded:Connect(function(player)
         AddPlayerUI(player)
     end
 end)
--- Cheat Tab ----------
 
+Players.PlayerRemoving:Connect(function(player)
+    if PlayerUI[player] then
+        PlayerUI[player] = nil
+    end
+end)
 
 -- UI Settings
 local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu", "wrench")
@@ -111,10 +109,7 @@ MenuGroup:AddDropdown("DPIDropdown", {
 })
 
 MenuGroup:AddDivider()
-
-MenuGroup:AddLabel("Menu bind")
-    :AddKeyPicker("MenuKeybind", { Default = "RightShift", NoUI = true, Text = "Menu keybind" })
-
+MenuGroup:AddLabel("Menu bind"):AddKeyPicker("MenuKeybind", { Default = "RightShift", NoUI = true, Text = "Menu keybind" })
 MenuGroup:AddButton("Unload", function()
     Library:Unload()
 end)
@@ -136,6 +131,6 @@ Library:Notify({
     Title = "CDoors Loaded",
     Description = "CDoors is Fully Loaded!!!",
     BigIcon = "rbxassetid://12497860513",
-    IconColor = Color3.new(0, 1, 0), -- Green
+    IconColor = Color3.new(0, 1, 0),
     Time = 4,
 })
