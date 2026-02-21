@@ -83,7 +83,6 @@ Settings:AddToggle("Cool", {
         print("Cool toggle:", Value)
     end
 })
-
 -- Cheat Tab ----------
 
 
