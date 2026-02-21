@@ -15,6 +15,57 @@ local Toggles = Library.Toggles
 Library.ForceCheckbox = false
 Library.ShowToggleFrameInKeybinds = true
 
+-- simple ESP module loading: the code lives in Code/ESP.lua and returns a table
+-- with :Toggle(state) and :SetText(text).  if the local file cannot be read we
+-- fall back to a minimal no-op implementation so the rest of the script still runs.
+local ESP = nil
+if isfile and readfile then
+    local ok,src = pcall(readfile, "Code/ESP.lua")
+    if ok and src then
+        local f = loadstring(src)
+        if f then
+            ESP = f()
+        end
+    end
+end
+ESP = ESP or {}
+ESP.Toggle = ESP.Toggle or function() end
+ESP.SetText = ESP.SetText or function() end
+
+-- configuration table in the main script maps a friendly "code" to the numeric id that
+-- will be looked up in the names file.  edit the value on the right to whatever
+-- asset/part id you want to track.
+local ItemCodes = {
+    Key = 123456789,            -- example entry, change this to the code you need
+}
+
+-- names file is read at startup and parsed into a simple id->name table.  the
+-- file lives at Code/ESPName/Names.txt and should contain lines of the form
+-- 123456789 = Kay
+-- this lets you keep the human readable names separate from the script.
+local ItemNames = {}
+if isfile and readfile then
+    local path = "Code/ESPName/Names.txt"
+    if isfile(path) then
+        for _, line in ipairs(string.split(readfile(path), "\n")) do
+            local id, name = line:match("^(%d+)%s*=%s*(.+)$")
+            if id and name then
+                ItemNames[id] = name
+            end
+        end
+    end
+end
+
+-- helper that builds the string shown by the ESP label when the toggle is on.
+local function getDisplayText(key)
+    local id = ItemCodes[key]
+    if not id then
+        return "(no code set)"
+    end
+    local name = ItemNames[tostring(id)] or "Unknown"
+    return tostring(id) .. " = " .. name
+end
+
 local Window = Library:CreateWindow({
     Title = "CDoors",
     Footer = "Fully open Source code",
@@ -49,6 +100,41 @@ MainB:AddImage("DOG", {
     end,
 })
 
+MainB:AddDivider()
+MainB:AddLabel("ESP configuration")
+MainB:AddTextbox("CodeBox", {
+    Text = tostring(ItemCodes.Key),
+    Placeholder = "numeric id",
+    FocusLost = function(value)
+        local n = tonumber(value)
+        if n then
+            ItemCodes.Key = n
+            if Toggles.PlayerEsp then
+                ESP:SetText(getDisplayText("Key"))
+            end
+        end
+    end,
+})
+MainB:AddButton("ReloadNames", function()
+    -- re-read the names file and update the table
+    ItemNames = {}
+    if isfile and readfile then
+        local path = "Code/ESPName/Names.txt"
+        if isfile(path) then
+            for _, line in ipairs(string.split(readfile(path), "\n")) do
+                local id, name = line:match("^(%d+)%s*=%s*(.+)$")
+                if id and name then
+                    ItemNames[id] = name
+                end
+            end
+        end
+    end
+    -- if ESP is visible update the text immediately
+    if Toggles.PlayerEsp then
+        ESP:SetText(getDisplayText("Key"))
+    end
+end)
+
 -- User Profile
 
 Profile:AddImage("UserIcon", {
@@ -64,18 +150,23 @@ Profile:AddLabel({
 })
 
 -- Visual Tab ----------
-local ESP = Tabs.Visual:AddLeftTabbox()
+local VisualTabbox = Tabs.Visual:AddLeftTabbox()
 
-local Main = ESP:AddTab("ESP")
+local Main = VisualTabbox:AddTab("ESP")
 Main:AddToggle("PlayerEsp", {
     Text = "Player Esp",
     Default = false,
     Callback = function(Value)
-        print("Player ESP:", Value)
+        -- when the toggle is flipped we visibility of the ESP label and update
+        -- its text to reflect the currently selected code/name pair
+        ESP:Toggle(Value)
+        if Value then
+            ESP:SetText(getDisplayText("Key"))
+        end
     end
 })
 
-local Settings = ESP:AddTab("Settings")
+local Settings = VisualTabbox:AddTab("Settings")
 Settings:AddToggle("Cool", {
     Text = "Tab",
     Default = false,
